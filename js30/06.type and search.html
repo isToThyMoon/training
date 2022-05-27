@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        html {
+        box-sizing: border-box;
+        background:hsla(193, 30%, 64%, 0.78);
+        font-family: 'Kaiti', 'SimHei', 'Hiragino Sans GB ', 'helvetica neue';
+        font-size: 20px;
+        font-weight: 200;
+        }
+        *, *:before, *:after {
+        box-sizing: inherit;
+        }
+
+        .search-Form {
+            max-width: 700px;
+            margin: 50px auto;
+        }
+
+        .search-Input {
+            position: relative;
+            width: 120%;
+            left: -10%;
+            top: 10px;
+            z-index: 2;
+            margin: 0;
+            border: 10px solid #F7F7F7;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            font-size: 40px;
+            font-family:'Kaiti', 'helvetica neue';
+            outline:0;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.12), inset 0 0 2px rgba(0, 0, 0, 0.19);
+        }
+
+        .output-Suggestions {
+            margin: 0;
+            padding: 0;
+            position: relative;
+
+        }
+
+        .output-Suggestions li {
+            background:white;
+            list-style: none;
+            border-bottom: 1px solid #D8D8D8;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.14);
+            margin:0;
+            padding:20px;
+            transition:background 0.2s;
+            display:flex;
+            justify-content:center;
+            text-transform: capitalize;
+        }
+
+        .output-Suggestions li:nth-child(even) {
+        transform: perspective(100px) rotateX(3deg) translateY(2px) scale(1.001);
+        background: linear-gradient(to bottom,  #ffffff 0%,#EFEFEF 100%);
+        }
+        .output-Suggestions li:nth-child(odd) {
+        transform: perspective(100px) rotateX(-3deg) translateY(3px);
+        background: linear-gradient(to top,  #ffffff 0%,#EFEFEF 100%);
+        }
+
+        .hightlight {
+            background:hsla(193, 37%, 64%, 0.65);
+        }
+
+        span.title {
+            color: #7c8e94;
+            position: absolute;
+            right: 5px;
+            bottom: 1px;
+        }
+        span.author, span.title {
+            font-size: .8em;
+    /*		right: 0;*/
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+    <form action="" class="search-Form">
+        <input type="text" class="search-Input" placeholder="诗名 诗句 诗人">
+        <ul class="output-Suggestions">
+            <li>输入词句，找一首诗</li>
+            <li></li>
+        </ul>
+    </form>
+
+    <script>
+        const endpoint = 'https://gist.githubusercontent.com/soyaine/81399bb2b24ca1bb5313e1985533c640/raw/bdf7df2cbcf70706c4a5e51a7dfb8c933ed78878/TangPoetry.json';
+
+        const poetrys = [];
+        fetch(endpoint)
+        .then((response) => {
+            return response.json();
+        })
+        .then(data => {
+            return poetrys.push(...data);
+        });
+
+        function findMatch(wordsToMatch, poetrys) {
+            return poetrys.filter( poet => {
+                const regex = new RegExp(wordsToMatch, 'gi');
+                const author = poet.detail_author.join('');
+                return poet.detail_text.match(regex) || poet.title.match(regex) || author.match(regex);
+            })
+        }
+
+        function displayMatches() {
+            const matchesPoterys = findMatch(this.value, poetrys);
+            const regex = new RegExp(this.value, 'gi');
+            const innerHtmls = matchesPoterys.map(poet => {
+                const text = poet.detail_text.replace(regex, `<span class="hightlight">${this.value}</span>`);
+                const title = poet.title.replace(regex, `<span class="hightlight">${this.value}</span>`);
+
+                return `
+                <li>
+                    <span>${ text }</span>
+					<span class="title">${ title } - ${ poet.detail_author[0] }</span>
+                </li>
+                `;
+            }).join('');
+            suggestionsBox.innerHTML = innerHtmls;
+        }
+
+        const searchBox = document.querySelector('.search-Input');
+        const suggestionsBox = document.querySelector('.output-Suggestions')
+
+        searchBox.addEventListener('change', displayMatches)
+        searchBox.addEventListener('keyup', displayMatches)
+    </script>
+</body>
+</html>
